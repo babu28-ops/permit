@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Permit #{{ permit.ref_no }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+            @bottom-center {
+                content: "Page " counter(page) " of " counter(pages);
+                font-size: 10pt;
+                color: #666;
+            }
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2cm;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-weight: bold;
+            border-bottom: 1px solid #000;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f5f5f5;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .status-approved { background-color: #d4edda; }
+        .status-pending { background-color: #fff3cd; }
+        .status-rejected { background-color: #f8d7da; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Permit Details</h1>
+        <p>Reference Number: {{ permit.ref_no }}</p>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Basic Information</div>
+        <table>
+            <tr>
+                <th>Status</th>
+                <td>
+                    <span class="status status-{{ permit.status|lower }}">
+                        {{ permit.status }}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <th>Application Date</th>
+                <td>{{ permit.application_date|date:"F d, Y" }}</td>
+            </tr>
+            <tr>
+                <th>Delivery Period</th>
+                <td>{{ permit.delivery_start|date:"F d, Y" }} - {{ permit.delivery_end|date:"F d, Y" }}</td>
+            </tr>
+            {% if permit.rejection_reason %}
+            <tr>
+                <th>Rejection Reason</th>
+                <td>{{ permit.rejection_reason }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Location Information</div>
+        <table>
+            <tr>
+                <th>Society</th>
+                <td>{{ permit.society.name }}</td>
+            </tr>
+            <tr>
+                <th>Factory</th>
+                <td>{{ permit.factory.name }}</td>
+            </tr>
+            <tr>
+                <th>Warehouse</th>
+                <td>{{ permit.warehouse.name }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Coffee Details</div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Grade</th>
+                    <th>Bags</th>
+                    <th>Weight per Bag (kg)</th>
+                    <th>Total Weight (kg)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in permit.coffee_quantities %}
+                <tr>
+                    <td>{{ item.coffee_grade.grade }}</td>
+                    <td>{{ item.bags_quantity }}</td>
+                    <td>{{ item.coffee_grade.weight_per_bag }}</td>
+                    <td>{{ item.total_weight }}</td>
+                </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="2"><strong>Total</strong></td>
+                    <td>-</td>
+                    <td><strong>{{ permit.total_weight }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
