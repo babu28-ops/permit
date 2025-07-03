@@ -20,7 +20,7 @@ from django.db.models import Q, F, Sum, FloatField, Count
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import PermitApplicationFilter
 from django.template.loader import render_to_string
-from weasyprint import HTML
+from xhtml2pdf import pisa
 from django.http import HttpResponse
 from django.conf import settings
 import os
@@ -843,12 +843,11 @@ def generate_permit_pdf(request, permit_id):
                 "permit": permit_data,
             },
         )
-        html = HTML(string=html_string)
-        pdf = html.write_pdf()
-        response = HttpResponse(pdf, content_type="application/pdf")
-        response["Content-Disposition"] = (
-            f'attachment; filename="permit_{permit.ref_no}.pdf"'
-        )
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="permit_{permit.ref_no}.pdf"'
+        pisa_status = pisa.CreatePDF(html_string, dest=response)
+        if pisa_status.err:
+            return HttpResponse("Error generating PDF", status=500)
         return response
     except Exception as e:
         return HttpResponse("Error generating PDF", status=500)
@@ -1032,10 +1031,11 @@ def analytics_report_pdf(request):
                 "all_grades": all_grades,
             },
         )
-        html = HTML(string=html_string)
-        pdf = html.write_pdf()
-        response = HttpResponse(pdf, content_type="application/pdf")
+        response = HttpResponse(content_type="application/pdf")
         response["Content-Disposition"] = 'attachment; filename="analytics_report.pdf"'
+        pisa_status = pisa.CreatePDF(html_string, dest=response)
+        if pisa_status.err:
+            return HttpResponse("Error generating analytics report PDF", status=500)
         return response
     except Exception as e:
         return HttpResponse("Error generating analytics report PDF", status=500)
