@@ -134,17 +134,16 @@ if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
     CSRF_COOKIE_SECURE = False
     SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SAMESITE = "Lax"  # Important for development
+    CSRF_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SAMESITE = "Lax"
-    CORS_ALLOW_CREDENTIALS = True
+    CORS_ALLOW_CREDENTIALS = True 
 else:
     CORS_ALLOW_ALL_ORIGINS = False
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SAMESITE = "None"
     SESSION_COOKIE_SAMESITE = "None"
-    CORS_ALLOW_CREDENTIALS = False  # Only allow credentials if absolutely necessary
-
+    CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
@@ -157,6 +156,19 @@ CSRF_TRUSTED_ORIGINS = config(
     default="https://coffee-permit.vercel.app",
     cast=Csv(),
 )
+
+CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
