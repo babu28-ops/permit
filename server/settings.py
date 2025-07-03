@@ -60,7 +60,7 @@ REST_AUTH = {
     "JWT_AUTH_COOKIE": "access_token",
     "JWT_AUTH_HTTPONLY": True,
     "JWT_AUTH_SAMESITE": "None",
-    "JWT_AUTH_SECURE": True,  
+    "JWT_AUTH_SECURE": True,
     "JWT_AUTH_REFRESH_COOKIE": "refresh_token",
     "SESSION_LOGIN": False,
     "USER_DETAILS_SERIALIZER": "users.serializers.CustomUserDetailsSerializer",
@@ -134,15 +134,15 @@ if DEBUG:
     CORS_ALLOW_ALL_ORIGINS = True
     CSRF_COOKIE_SECURE = False
     SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SAMESITE = 'Lax'  # Important for development
-    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = "Lax"  # Important for development
+    SESSION_COOKIE_SAMESITE = "Lax"
     CORS_ALLOW_CREDENTIALS = True
 else:
     CORS_ALLOW_ALL_ORIGINS = False
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SAMESITE = 'None'
-    SESSION_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SAMESITE = "None"
+    SESSION_COOKIE_SAMESITE = "None"
     CORS_ALLOW_CREDENTIALS = False  # Only allow credentials if absolutely necessary
 
 
@@ -207,31 +207,34 @@ AUTHENTICATION_BACKENDS = [
 
 WSGI_APPLICATION = "server.wsgi.application"
 
-ASGI_APPLICATION = "server.asgi.application"  # Adjust 'server' to your project root if different
+ASGI_APPLICATION = (
+    "server.asgi.application"  # Adjust 'server' to your project root if different
+)
 
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # For Development
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
-## For Production
 # DATABASES = {
 #     "default": {
-#         "ENGINE": config("DB_ENGINE"),
-#         "NAME": config("DB_NAME"),
-#         "USER": config("DB_USER"),
-#         "PASSWORD": config("DB_PASSWORD"),
-#         "HOST": config("DB_HOST"),
-#         "PORT": config("DB_PORT"),
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
 #     }
 # }
+
+# For Production
+DATABASES = {
+    "default": {
+        "ENGINE": config("DB_ENGINE"),
+        "NAME": config("DB_NAME"),
+        "USER": config("DB_USER"),
+        "PASSWORD": config("DB_PASSWORD"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("DB_PORT"),
+        "OPTIONS": {"sslmode": "require"},
+    }
+}
 
 
 # Password validation
@@ -291,7 +294,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         # 'user': '1000/day',
         # ...other rates...
-    }
+    },
 }
 
 # Allauth settings - Updated to use new format
@@ -337,7 +340,12 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [(config("REDIS_HOST", default="127.0.0.1"), config("REDIS_PORT", default=6379, cast=int))]
+            "hosts": [
+                (
+                    config("REDIS_HOST", default="127.0.0.1"),
+                    config("REDIS_PORT", default=6379, cast=int),
+                )
+            ]
         },
     },
 }
