@@ -17,6 +17,7 @@ from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.conf import settings
 from django.utils import timezone
 from .models import Notification
+from django.http import JsonResponse
 
 User = get_user_model()
 
@@ -209,3 +210,12 @@ class NotificationViewSet(viewsets.ModelViewSet):
             instance.save(update_fields=['is_read'])
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+@method_decorator(ensure_csrf_cookie, name='dispatch')
+class GetCSRFToken(APIView):
+    permission_classes = [AllowAny]
+    
+    def get(self, request):
+        from django.middleware.csrf import get_token
+        token = get_token(request)
+        return JsonResponse({'csrfToken': token})

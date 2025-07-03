@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .views import SecureLoginView, SecureLogoutView, UserRoleView, CustomRegisterView, NotificationPreferencesView, NotificationViewSet
 from rest_framework.routers import DefaultRouter
 
@@ -13,7 +13,9 @@ class GetCSRFToken(APIView):
     permission_classes = [AllowAny]
     
     def get(self, request):
-        return HttpResponse()
+        from django.middleware.csrf import get_token
+        token = get_token(request)
+        return JsonResponse({'csrfToken': token})
 
 router = DefaultRouter()
 router.register(r'notifications', NotificationViewSet, basename='notification')
