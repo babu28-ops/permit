@@ -148,13 +148,13 @@ else:
 
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    default="https://your-production-domain.com",  # Set your production domain
+    default="https://coffee-permit.vercel.app",  # Set your production domain
     cast=Csv(),
 )
 
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    default="https://your-production-domain.com",
+    default="https://coffee-permit.vercel.app",
     cast=Csv(),
 )
 
@@ -336,16 +336,17 @@ if DEBUG:
     SIMPLE_JWT["AUTH_COOKIE_SECURE"] = False
     REST_AUTH["JWT_AUTH_SECURE"] = False
 
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [
-                (
-                    config("REDIS_HOST", default="127.0.0.1"),
-                    config("REDIS_PORT", default=6379, cast=int),
-                )
-            ]
+            "hosts": [{
+                "host": config("REDIS_HOST"),
+                "port": config("REDIS_PORT", cast=int),
+                "password": config("REDIS_PASSWORD", default=None),
+                "ssl": config("REDIS_SSL", default=False, cast=bool),
+            }]
         },
     },
 }
