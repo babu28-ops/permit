@@ -27,7 +27,6 @@ import os
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from django.core.exceptions import ObjectDoesNotExist
-import logging
 from .throttling import (
     SocietyManagerRateThrottle,
     StaffRateThrottle,
@@ -40,8 +39,6 @@ from datetime import timedelta
 import pandas as pd
 from rest_framework.pagination import PageNumberPagination
 from users.utils import notify_user
-
-logger = logging.getLogger(__name__)
 
 
 class IsSocietyManager(BasePermission):
@@ -99,10 +96,8 @@ class PermitApplicationViewSet(viewsets.ModelViewSet):
             print("Data received in PermitApplicationViewSet create:", request.data)
             return super().create(request, *args, **kwargs)
         except ValidationError as e:
-            logger.error(f"Validation error in permit creation: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.error(f"Unexpected error in permit creation: {str(e)}")
             return Response(
                 {"error": "An unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -856,7 +851,6 @@ def generate_permit_pdf(request, permit_id):
         )
         return response
     except Exception as e:
-        logger.error(f"Error generating permit PDF: {str(e)}")
         return HttpResponse("Error generating PDF", status=500)
 
 @api_view(["POST"])
@@ -1044,5 +1038,4 @@ def analytics_report_pdf(request):
         response["Content-Disposition"] = 'attachment; filename="analytics_report.pdf"'
         return response
     except Exception as e:
-        logger.error(f"Error generating analytics report PDF: {str(e)}")
         return HttpResponse("Error generating analytics report PDF", status=500)

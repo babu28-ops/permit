@@ -17,11 +17,8 @@ from django.utils import timezone
 from django.db import IntegrityError, transaction
 from .permissions import IsSocietyManager, IsAdminOrReadOnly, IsSocietyApproved
 from .throttling import AdminActionThrottle, SocietyActionThrottle, RegistrationThrottle
-import logging
 from rest_framework.generics import ListAPIView
 from users.utils import notify_admins, notify_user
-
-logger = logging.getLogger(__name__)
 
 # Registration Views
 class SocietyRegistrationView(generics.CreateAPIView):
@@ -53,12 +50,10 @@ class SocietyRegistrationView(generics.CreateAPIView):
                 }, status=status.HTTP_201_CREATED)
             # Handle validation errors
             # Log the specific error for audit, but do not reveal to client
-            logger.warning(f"Society registration validation error: {serializer.errors} from {request.META.get('REMOTE_ADDR')}")
             return Response({
                 'error': 'Registration failed. Please check your details and try again.'
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            logger.error(f"Society registration error: {str(e)} from {request.META.get('REMOTE_ADDR')}")
             return Response({
                 'error': 'An error occurred during registration. Please try again later.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

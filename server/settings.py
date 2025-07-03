@@ -333,32 +333,6 @@ if DEBUG:
     SIMPLE_JWT["AUTH_COOKIE_SECURE"] = False
     REST_AUTH["JWT_AUTH_SECURE"] = False
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
-            'style': '{',
-        },
-    },
-    'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs/security.log'),
-            'formatter': 'verbose',
-        },
-    },
-    'loggers': {
-        'users': {
-            'handlers': ['file'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
-}
-
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
