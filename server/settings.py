@@ -359,10 +359,9 @@ CHANNEL_LAYERS = {
             "hosts": [{
                 "host": config("REDIS_HOST"),
                 "port": config("REDIS_PORT", cast=int),
-                "password": config("REDIS_PASSWORD", default=None),
+                "password": config("REDIS_PASSWORD"),
                 "ssl": config("REDIS_SSL", default=False, cast=bool),
-            }]
+            }],
         },
     },
 }
-
