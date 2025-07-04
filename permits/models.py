@@ -37,7 +37,7 @@ class PermitApplication(models.Model):
         ("EXPIRED", "Expired"),
     ]
 
-    ref_no = models.CharField(max_length=20, editable=False)
+    ref_no = models.CharField(max_length=50, editable=False)
     farmer = models.ForeignKey(
         CustomUser, on_delete=models.PROTECT, related_name="applications"
     )
