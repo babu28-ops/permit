@@ -3,6 +3,10 @@ from datetime import timedelta
 from decouple import config, Csv
 import os
 
+# Global URL Configurations for Server and Client
+CLIENT_URL = config("CLIENT_URL")
+SERVER_URL = config("SERVER_URL")
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -79,8 +83,8 @@ CONTENT_SECURITY_POLICY = {
         "font-src": ("'self'",),
         "connect-src": (
             "'self'",
-            "https://cmp-backend-kipkurui269830-vkrh434l.leapcell.dev",
-            "https://coffee-permit.vercel.app",  # Only if you use WebSockets or similar from frontend
+            SERVER_URL,
+            CLIENT_URL,
         ),
     }
 }
@@ -151,13 +155,13 @@ else:
 
 CORS_ALLOWED_ORIGINS = config(
     "CORS_ALLOWED_ORIGINS",
-    default="https://coffee-permit.vercel.app",  # Set your production domain
+    default=CLIENT_URL,
     cast=Csv(),
 )
 
 CSRF_TRUSTED_ORIGINS = config(
     "CSRF_TRUSTED_ORIGINS",
-    default="https://coffee-permit.vercel.app",
+    default=CLIENT_URL,
     cast=Csv(),
 )
 
@@ -366,3 +370,4 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
