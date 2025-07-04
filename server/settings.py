@@ -12,14 +12,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security Settings
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True  # In production
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_SAMESITE = "None"
-SESSION_COOKIE_SAMESITE = "None"
+
 AUTH_COOKIE_SAMESITE = "None"  # Custom, for use in your set_cookie calls
 
 
@@ -351,8 +348,6 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Allow non-secure cookies in development
 if DEBUG:
-    CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_SECURE = False
     SIMPLE_JWT["AUTH_COOKIE_SECURE"] = False
     REST_AUTH["JWT_AUTH_SECURE"] = False
 
