@@ -352,16 +352,20 @@ if DEBUG:
     REST_AUTH["JWT_AUTH_SECURE"] = False
 
 
+redis_config = {
+    "host": config("REDIS_HOST"),
+    "port": config("REDIS_PORT", cast=int),
+    "password": config("REDIS_PASSWORD"),
+}
+
+if config("REDIS_SSL", default=False, cast=bool):
+    redis_config["ssl"] = True
+
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [{
-                "host": config("REDIS_HOST"),
-                "port": config("REDIS_PORT", cast=int),
-                "password": config("REDIS_PASSWORD"),
-                "ssl": config("REDIS_SSL", default=False, cast=bool),
-            }],
+            "hosts": [redis_config],
         },
     },
 }
