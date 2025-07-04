@@ -78,7 +78,7 @@ class SecureLoginView(APIView):
             str(refresh.access_token),
             httponly=True,
             secure=True,
-            samesite='Lax',
+            samesite='None',
             max_age=86400 
         )
         response.set_cookie(
@@ -86,7 +86,7 @@ class SecureLoginView(APIView):
             str(refresh),
             httponly=True,
             secure=True,
-            samesite='Lax',
+            samesite='None',
             max_age=432000  
         )
         return response

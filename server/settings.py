@@ -7,8 +7,8 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security Settings
-# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# SECURE_SSL_REDIRECT = True  # In production
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True  # In production
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SESSION_COOKIE_SECURE = True
@@ -77,7 +77,11 @@ CONTENT_SECURITY_POLICY = {
         "style-src": ("'self'",),
         "img-src": ("'self'", "data:"),
         "font-src": ("'self'",),
-        "connect-src": ("'self'", "https://api.yourdomain.com"),
+        "connect-src": (
+            "'self'",
+            "https://cmp-backend-kipkurui269830-vkrh434l.leapcell.dev",
+            "https://coffee-permit.vercel.app",  # Only if you use WebSockets or similar from frontend
+        ),
     }
 }
 
