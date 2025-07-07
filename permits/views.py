@@ -20,13 +20,14 @@ from django.db.models import Q, F, Sum, FloatField, Count
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import PermitApplicationFilter
 from django.template.loader import render_to_string
-from xhtml2pdf import pisa
+from weasyprint import HTML
 from django.http import HttpResponse
 from django.conf import settings
 import os
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from django.core.exceptions import ObjectDoesNotExist
+import logging
 from .throttling import (
     SocietyManagerRateThrottle,
     StaffRateThrottle,
@@ -39,6 +40,8 @@ from datetime import timedelta
 import pandas as pd
 from rest_framework.pagination import PageNumberPagination
 from users.utils import notify_user
+
+logger = logging.getLogger(__name__)
 
 
 class IsSocietyManager(BasePermission):
@@ -96,8 +99,10 @@ class PermitApplicationViewSet(viewsets.ModelViewSet):
             print("Data received in PermitApplicationViewSet create:", request.data)
             return super().create(request, *args, **kwargs)
         except ValidationError as e:
+            logger.error(f"Validation error in permit creation: {str(e)}")
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            logger.error(f"Unexpected error in permit creation: {str(e)}")
             return Response(
                 {"error": "An unexpected error occurred"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -597,6 +602,7 @@ class PermitApplicationViewSet(viewsets.ModelViewSet):
         end_date = request.query_params.get("end_date")
 
         permits = self.filter_queryset(self.get_queryset())
+        permits = permits.filter(status="APPROVED")  # Only approved permits
         if start_date:
             permits = permits.filter(application_date__date__gte=start_date)
         if end_date:
@@ -639,6 +645,7 @@ class PermitApplicationViewSet(viewsets.ModelViewSet):
         exclude_grades = exclude_grades.split(",") if exclude_grades else []
 
         permits = self.filter_queryset(self.get_queryset())
+        permits = permits.filter(status="APPROVED")  # Only approved permits
         if start_date:
             permits = permits.filter(application_date__date__gte=start_date)
         if end_date:
@@ -843,13 +850,15 @@ def generate_permit_pdf(request, permit_id):
                 "permit": permit_data,
             },
         )
-        response = HttpResponse(content_type="application/pdf")
-        response["Content-Disposition"] = f'attachment; filename="permit_{permit.ref_no}.pdf"'
-        pisa_status = pisa.CreatePDF(html_string, dest=response)
-        if pisa_status.err:
-            return HttpResponse("Error generating PDF", status=500)
+        html = HTML(string=html_string)
+        pdf = html.write_pdf()
+        response = HttpResponse(pdf, content_type="application/pdf")
+        response["Content-Disposition"] = (
+            f'attachment; filename="permit_{permit.ref_no}.pdf"'
+        )
         return response
     except Exception as e:
+        logger.error(f"Error generating permit PDF: {str(e)}")
         return HttpResponse("Error generating PDF", status=500)
 
 @api_view(["POST"])
@@ -1031,11 +1040,12 @@ def analytics_report_pdf(request):
                 "all_grades": all_grades,
             },
         )
-        response = HttpResponse(content_type="application/pdf")
+        html = HTML(string=html_string)
+        pdf = html.write_pdf()
+        response = HttpResponse(pdf, content_type="application/pdf")
         response["Content-Disposition"] = 'attachment; filename="analytics_report.pdf"'
-        pisa_status = pisa.CreatePDF(html_string, dest=response)
-        if pisa_status.err:
-            return HttpResponse("Error generating analytics report PDF", status=500)
         return response
     except Exception as e:
+        logger.error(f"Error generating analytics report PDF: {str(e)}")
         return HttpResponse("Error generating analytics report PDF", status=500)
+

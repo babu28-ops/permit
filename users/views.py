@@ -77,16 +77,16 @@ class SecureLoginView(APIView):
             'access_token',
             str(refresh.access_token),
             httponly=True,
-            secure=True,
-            samesite='None',
+            secure=settings.SESSION_COOKIE_SECURE,
+            samesite=settings.SESSION_COOKIE_SAMESITE,
             max_age=86400 
         )
         response.set_cookie(
             'refresh_token',
             str(refresh),
             httponly=True,
-            secure=True,
-            samesite='None',
+            secure=settings.SESSION_COOKIE_SECURE,
+            samesite=settings.SESSION_COOKIE_SAMESITE,
             max_age=432000  
         )
         return response
