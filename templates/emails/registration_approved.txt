@@ -1,0 +1,8 @@
+Congratulations, {{ first_name }}!
+
+Your application for {{ society_name }} has been approved.
+
+You can now log in to your account.
+ 
+Best regards,
+{{ admin_name }} 

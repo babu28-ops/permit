@@ -10,14 +10,23 @@ from django.contrib.auth import get_user_model
 from rest_framework.throttling import AnonRateThrottle
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from .serializers import CustomUserDetailsSerializer, LoginSerializer, NotificationPreferencesSerializer, NotificationSerializer
+from .serializers import (
+    CustomUserDetailsSerializer, LoginSerializer, NotificationPreferencesSerializer, NotificationSerializer,
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer
+)
 from dj_rest_auth.registration.views import RegisterView
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 from django.conf import settings
 from django.utils import timezone
-from .models import Notification
+from .models import Notification, PasswordResetToken
 from django.http import JsonResponse
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.urls import reverse
+import secrets
 
 User = get_user_model()
 
@@ -219,3 +228,70 @@ class GetCSRFToken(APIView):
         from django.middleware.csrf import get_token
         token = get_token(request)
         return JsonResponse({'csrfToken': token})
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
+
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            # Always return success to prevent user enumeration
+            return Response({'message': 'If an account with that email exists, a reset link has been sent.'})
+        # Invalidate previous tokens
+        PasswordResetToken.objects.filter(user=user, used=False).update(used=True)
+        # Generate token
+        token = secrets.token_urlsafe(32)
+        expiry = timezone.now() + timezone.timedelta(days=3)
+        reset_token = PasswordResetToken.objects.create(user=user, token=token, expiry=expiry)
+        uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+        reset_link = f"{settings.CLIENT_URL}/reset-password/{uidb64}/{token}"
+        # Send email
+        context = {
+            'first_name': user.first_name or user.email,
+            'reset_link': reset_link,
+            'admin_name': getattr(settings, 'ADMIN_USER_NAME', 'Admin'),
+        }
+        subject = 'Password Reset Request'
+        message = render_to_string('emails/password_reset_custom.html', context)
+        send_mail(
+            subject,
+            '',
+            settings.EMAIL_HOST_USER,
+            [user.email],
+            html_message=message,
+        )
+        return Response({'message': 'If an account with that email exists, a reset link has been sent.'})
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+    throttle_classes = [LoginRateThrottle]
+
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        uidb64 = serializer.validated_data['uid']
+        token = serializer.validated_data['token']
+        new_password = serializer.validated_data['new_password1']
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            User = get_user_model()
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            return Response({'error': 'Invalid link.'}, status=400)
+        try:
+            reset_token = PasswordResetToken.objects.get(user=user, token=token, used=False)
+        except PasswordResetToken.DoesNotExist:
+            return Response({'error': 'Invalid or expired token.'}, status=400)
+        if not reset_token.is_valid():
+            return Response({'error': 'Token expired or already used.'}, status=400)
+        # Set new password
+        user.set_password(new_password)
+        user.save()
+        reset_token.mark_used()
+        return Response({'message': 'Password reset successful.'})

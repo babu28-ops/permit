@@ -6,6 +6,9 @@ from django.contrib.auth.models import BaseUserManager
 import secrets
 import string
 from django.db import transaction
+import uuid
+from django.utils import timezone
+from django.conf import settings
 
 User = get_user_model()
 
@@ -38,7 +41,8 @@ class SocietySerializer(serializers.ModelSerializer):
             'rejection_reason',
             'date_rejected',
             'rejected_by',
-            'rejected_by_name'
+            'rejected_by_name',
+            'canceled',
         ]
         read_only_fields = [
             'date_registered',
@@ -125,17 +129,18 @@ class SocietyRegistrationSerializer(serializers.ModelSerializer):
         if data['password'] != data['password2']:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
         
-        if CustomUser.objects.filter(email=data['email']).exists():
+        # Only check active users/societies
+        if CustomUser.objects.filter(email=data['email'], is_active=True).exists():
             raise serializers.ValidationError({
                 "email": "A user with this email already exists."
             })
         
-        if CustomUser.objects.filter(phone_no=data['phone_no']).exists():
+        if CustomUser.objects.filter(phone_no=data['phone_no'], is_active=True).exists():
             raise serializers.ValidationError({
                 "phone_no": "A user with this phone number already exists."
             })
         
-        if Society.objects.filter(name__iexact=data['society_name']).exists():
+        if Society.objects.filter(name__iexact=data['society_name'], is_active=True).exists():
             raise serializers.ValidationError({
                 "society_name": "A society with this name already exists."
             })
@@ -159,13 +164,19 @@ class SocietyRegistrationSerializer(serializers.ModelSerializer):
             # Create the CustomUser
             user = CustomUser.objects.create_user(**user_data)
             
+            # Generate cancel token and expiry (e.g., 3 days from now)
+            cancel_token = uuid.uuid4().hex
+            cancel_token_expiry = timezone.now() + timezone.timedelta(days=3)
+            
             # Extract society data
             society_data = {
                 'name': validated_data.pop('society_name'),
                 'manager': user,  
                 'county': validated_data.pop('county'),
                 'sub_county': validated_data.pop('sub_county'),
-                'is_approved': False 
+                'is_approved': False, 
+                'cancel_token': cancel_token,
+                'cancel_token_expiry': cancel_token_expiry,
             }
             
             # Create the Society
@@ -193,8 +204,7 @@ class AdminSocietyRegistrationSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         from django.core.mail import send_mail
-        from django.conf import settings
-
+        from utils.email_utils import send_template_email
         password = generate_random_password()
         user = User.objects.create_user(
             email=validated_data['email'],
@@ -212,15 +222,24 @@ class AdminSocietyRegistrationSerializer(serializers.Serializer):
             sub_county=validated_data['sub_county'],
             is_approved=True  # Immediately approved
         )
-
-        send_mail(
+        # Send welcome email with credentials
+        login_link = getattr(settings, 'CLIENT_URL', None)
+        if not login_link:
+            raise Exception('CLIENT_URL is not set in Django settings. Please configure CLIENT_URL in your environment.')
+        login_link = f"{login_link}/login"
+        send_template_email(
             subject="Your Society Manager Account",
-            message=f"Hello {user.first_name},\n\nYour account has been created by the admin. Your temporary password is: {password}\nPlease log in and change your password as soon as possible.",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
+            to_email=user.email,
+            template_base="admin_account_created",
+            context={
+                "first_name": user.first_name,
+                "society_name": society.name,
+                "email": user.email,
+                "password": password,
+                "login_link": login_link,
+                "admin_name": getattr(settings, 'ADMIN_USER_NAME', 'Admin'),
+            }
         )
-
         return society
 
 class AuditLogSerializer(serializers.ModelSerializer):

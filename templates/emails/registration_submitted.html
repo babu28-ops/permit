@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+  <body style="font-family: Arial, sans-serif; color: #222;">
+  <h2>Thank you for your application, {{ first_name }}!</h2>
+  <p>Your application for <strong>{{ society_name }}</strong> has been received.</p>
+    <p>If you wish to cancel your application, click the button below:</p>
+    <p style="margin: 24px 0;">
+      <a href="{{ cancel_link }}"
+         style="background: #b45309; color: #fff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+        Cancel My Application
+      </a>
+    </p>
+  <p>We will notify you once your application is reviewed.</p>
+  <br>
+  <p>Best regards,<br>{{ admin_name }}</p>
+</body>
+</html>

@@ -6,6 +6,8 @@ import os
 # Global URL Configurations for Server and Client
 CLIENT_URL = config("CLIENT_URL")
 SERVER_URL = config("SERVER_URL")
+# ADMIN_USER_NAME = config("ADMIN_USER_NAME")
+# ADMIN_USER_EMAIL = config("ADMIN_USER_EMAIL", default=None)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -102,7 +104,7 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost", cast=Csv())
 # Application definition
 
 INSTALLED_APPS = [
-    "jazzmin",
+    # "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -331,23 +333,24 @@ ACCOUNT_LOGOUT_ON_GET = True
 ACCOUNT_LOGOUT_ON_PASSWORD_CHANGE = False
 ACCOUNT_PASSWORD_MIN_LENGTH = 8
 
-# Email settings for development (replace your existing email configuration)
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# # Email settings for development (replace your existing email configuration)
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 
-# # For Production
-# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-# EMAIL_HOST = config("EMAIL_HOST", default=None)
-# EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
-# EMAIL_HOST_USER = config("EMAIL_HOST_USER", default=None)
-# EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default=None)
-# EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+#################### [SMTP EMAIL CONFIGURATIONS PRODUCTION] ####################
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = config("EMAIL_HOST", default=None)
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default=None)
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default=None)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 
-# # Admins/Managers
-# ADMIN_USER_NAME = config("ADMIN_USER_NAME", default="Admin User")
-# ADMIN_USER_EMAIL = config("ADMIN_USER_EMAIL", default=None)
-# ADMINS = [(ADMIN_USER_NAME, ADMIN_USER_EMAIL)] if ADMIN_USER_EMAIL else []
-# MANAGERS = ADMINS
+# Admins/Managers
+ADMIN_USER_NAME = config("ADMIN_USER_NAME", default="Admin User")
+ADMIN_USER_EMAIL = config("ADMIN_USER_EMAIL", default=None)
+ADMINS = [(ADMIN_USER_NAME, ADMIN_USER_EMAIL)] if ADMIN_USER_EMAIL else []
+MANAGERS = ADMINS
+#################### [ END ] ####################
 
 
 #################### [REDIS CONFIGURATIONS DEVELOPMENT] ####################

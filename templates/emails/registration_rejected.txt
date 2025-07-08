@@ -1,0 +1,10 @@
+Hello, {{ first_name }}
+
+We regret to inform you that your application for {{ society_name }} was rejected.
+
+Reason: {{ rejection_reason }}
+
+If you have questions, please contact support.
+
+Best regards,
+{{ admin_name }} 

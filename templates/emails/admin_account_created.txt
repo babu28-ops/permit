@@ -1,0 +1,14 @@
+Welcome to Coffee Movement Permit, {{ first_name }}!
+
+Your society {{ society_name }} has been registered by the admin.
+
+Your account has been created with the following credentials:
+- Email: {{ email }}
+- Temporary Password: {{ password }}
+
+Please log in using the above credentials and change your password immediately for security.
+
+Login here: {{ login_link }}
+
+Best regards,
+{{ admin_name }} 

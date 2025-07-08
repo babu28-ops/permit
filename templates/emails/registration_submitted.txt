@@ -1,0 +1,10 @@
+Thank you for your application, {{ first_name }}!
+
+Your application for {{ society_name }} has been received.
+
+If you wish to cancel your application, visit: {{ cancel_link }}
+
+We will notify you once your application is reviewed.
+
+Best regards,
+{{ admin_name }}

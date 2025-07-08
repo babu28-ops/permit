@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -19,6 +19,9 @@ from .permissions import IsSocietyManager, IsAdminOrReadOnly, IsSocietyApproved
 from .throttling import AdminActionThrottle, SocietyActionThrottle, RegistrationThrottle
 from rest_framework.generics import ListAPIView
 from users.utils import notify_admins, notify_user
+from utils.email_utils import send_template_email
+from django.conf import settings
+from rest_framework.views import APIView
 
 # Registration Views
 class SocietyRegistrationView(generics.CreateAPIView):
@@ -43,6 +46,23 @@ class SocietyRegistrationView(generics.CreateAPIView):
                     message=f"New society registration submitted: {society.name}",
                     link=f"/admin/societies/{society.id}"
                 )
+                cancel_link = f"{settings.CLIENT_URL}/cancel-application/{society.cancel_token}"
+
+                # Do email sending outside the transaction
+                try:
+                    send_template_email(
+                        subject="Your Application Has Been Received",
+                        to_email=society.manager.email,
+                        template_base="registration_submitted",
+                        context={
+                            "first_name": society.manager.first_name,
+                            "society_name": society.name,
+                            "cancel_link": cancel_link,
+                            "admin_name": settings.ADMIN_USER_NAME,
+                        }
+                    )
+                except Exception as email_err:
+                    print(f"Email sending failed: {email_err}")
                 return Response({
                     'message': 'Application submitted successfully. Please wait for approval.',
                     'society_id': society.id,
@@ -54,6 +74,7 @@ class SocietyRegistrationView(generics.CreateAPIView):
                 'error': 'Registration failed. Please check your details and try again.'
             }, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            print(f"Registration error: {e}")
             return Response({
                 'error': 'An error occurred during registration. Please try again later.'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -133,6 +154,17 @@ class AdminSocietyViewSet(viewsets.ModelViewSet):
                 link=f"/societies/{society.id}"
             )
 
+            send_template_email(
+                subject="Your Application Has Been Approved",
+                to_email=society.manager.email,
+                template_base="registration_approved",
+                context={
+                    "first_name": society.manager.first_name,
+                    "society_name": society.name,
+                    "admin_name": settings.ADMIN_USER_NAME,
+                }
+            )
+
         return Response({
             'status': 'society approved',
             'date_approved': society.date_approved
@@ -184,6 +216,18 @@ class AdminSocietyViewSet(viewsets.ModelViewSet):
                 type="SOCIETY_REJECTED",
                 message=f"Your society '{society.name}' registration was rejected. Reason: {rejection_reason}",
                 link=f"/societies/{society.id}"
+            )
+
+            send_template_email(
+                subject="Your Application Has Been Rejected",
+                to_email=society.manager.email,
+                template_base="registration_rejected",
+                context={
+                    "first_name": society.manager.first_name,
+                    "society_name": society.name,
+                    "rejection_reason": society.rejection_reason,
+                    "admin_name": settings.ADMIN_USER_NAME,
+                }
             )
         
         return Response({
@@ -396,3 +440,34 @@ class AuditLogListView(ListAPIView):
                 ])
             return response
         return super().list(request, *args, **kwargs)
+
+class CancelSocietyApplicationView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, token):
+        society = get_object_or_404(Society, cancel_token=token)
+        now = timezone.now()
+        if not society.cancel_token or not society.cancel_token_expiry or society.cancel_token_expiry < now:
+            return Response({'error': 'This cancellation link is invalid or has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+        if society.is_approved:
+            return Response({'error': 'This application has already been approved and cannot be cancelled.'}, status=status.HTTP_400_BAD_REQUEST)
+        if society.rejection_reason:
+            return Response({'error': 'This application has already been rejected.'}, status=status.HTTP_400_BAD_REQUEST)
+        # Mark as rejected and inactive
+        society.rejection_reason = 'Cancelled by applicant via email link.'
+        society.date_rejected = now
+        society.cancel_token = None
+        society.cancel_token_expiry = None
+        society.is_active = False
+        society.canceled = True
+        society.save()
+        # Also deactivate the manager user
+        society.manager.is_active = False
+        society.manager.save()
+        # Notify admin about cancellation
+        notify_admins(
+            type="SOCIETY_REGISTRATION_CANCELLED",
+            message=f"Society registration cancelled by user: {society.name}",
+            link=f"/admin/societies/{society.id}"
+        )
+        return Response({'message': 'Your application has been cancelled.'}, status=status.HTTP_200_OK)

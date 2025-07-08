@@ -5,7 +5,7 @@ from rest_framework.permissions import AllowAny
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.utils.decorators import method_decorator
 from django.http import HttpResponse, JsonResponse
-from .views import SecureLoginView, SecureLogoutView, UserRoleView, CustomRegisterView, NotificationPreferencesView, NotificationViewSet
+from .views import SecureLoginView, SecureLogoutView, UserRoleView, CustomRegisterView, NotificationPreferencesView, NotificationViewSet, PasswordResetRequestView, PasswordResetConfirmView
 from rest_framework.routers import DefaultRouter
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
@@ -28,5 +28,7 @@ urlpatterns = [
     path('registration/', CustomRegisterView.as_view(), name='registration'),
     path('csrf/', GetCSRFToken.as_view(), name='csrf'),
     path('notification-preferences/', NotificationPreferencesView.as_view(), name='notification-preferences'),
+    path('password/forgot/', PasswordResetRequestView.as_view(), name='password_forgot'),
+    path('password/reset/confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('', include(router.urls)),
 ]

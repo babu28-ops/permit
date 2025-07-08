@@ -4,6 +4,15 @@ from dj_rest_auth.serializers import UserDetailsSerializer, PasswordChangeSerial
 from django.contrib.auth import get_user_model
 from societies.serializers import SocietySerializer
 import re
+from utils.email_utils import send_template_email
+from django.conf import settings
+from django.contrib.sites.shortcuts import get_current_site
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.encoding import force_str
+from django.utils.http import urlsafe_base64_decode
+from .models import PasswordResetToken
 
 User = get_user_model()
 
@@ -123,7 +132,54 @@ class CustomPasswordChangeSerializer(PasswordChangeSerializer):
             raise serializers.ValidationError("Unable to change password. Please check your credentials and try again.")
         return value
 
+    def save(self):
+        user = self.context['request'].user
+        response = super().save()
+        # Send password change email
+        from utils.email_utils import send_template_email
+        from django.utils import timezone
+        from django.conf import settings
+        reset_link = getattr(settings, 'CLIENT_URL', None)
+        if not reset_link:
+            raise serializers.ValidationError('CLIENT_URL is not set in Django settings. Please configure CLIENT_URL in your environment.')
+        reset_link = f"{reset_link}/forgot-password"
+        send_template_email(
+            subject="Your Password Was Changed",
+            to_email=user.email,
+            template_base="password_changed",
+            context={
+                "first_name": user.first_name or user.email,
+                "change_time": timezone.now().strftime('%Y-%m-%d %H:%M:%S'),
+                "reset_link": reset_link,
+                "admin_name": getattr(settings, 'ADMIN_USER_NAME', 'Admin'),
+            }
+        )
+        return response
+
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = User.notifications.rel.related_model
         fields = ['id', 'type', 'message', 'is_read', 'created_at', 'link']
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        User = get_user_model()
+        if not User.objects.filter(email=value).exists():
+            # Always return valid to prevent user enumeration
+            return value
+        return value
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    uid = serializers.CharField()
+    token = serializers.CharField()
+    new_password1 = serializers.CharField(write_only=True)
+    new_password2 = serializers.CharField(write_only=True)
+
+    def validate(self, data):
+        if data['new_password1'] != data['new_password2']:
+            raise serializers.ValidationError('Passwords do not match.')
+        # Validate password strength if needed
+        return data
+

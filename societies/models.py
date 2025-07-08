@@ -30,6 +30,10 @@ class Society(models.Model):
         null=True,
         related_name='rejected_societies'
     )
+    cancel_token = models.CharField(max_length=64, null=True, blank=True, unique=True)
+    cancel_token_expiry = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    canceled = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
