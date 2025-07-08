@@ -6,14 +6,12 @@ import os
 # Global URL Configurations for Server and Client
 CLIENT_URL = config("CLIENT_URL")
 SERVER_URL = config("SERVER_URL")
-# ADMIN_USER_NAME = config("ADMIN_USER_NAME")
-# ADMIN_USER_EMAIL = config("ADMIN_USER_EMAIL", default=None)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security Settings
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 CSRF_COOKIE_HTTPONLY = False
@@ -104,7 +102,7 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost", cast=Csv())
 # Application definition
 
 INSTALLED_APPS = [
-    # "jazzmin",
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -113,7 +111,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.sites",
     # Local Apps
-    # "locations.apps.LocationsConfig",
     "users.apps.UsersConfig",
     "societies.apps.SocietiesConfig",
     "warehouse.apps.WarehouseConfig",
@@ -143,7 +140,7 @@ if DEBUG:
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SAMESITE = "Lax"
-    CORS_ALLOW_CREDENTIALS = True 
+    CORS_ALLOW_CREDENTIALS = True
     SIMPLE_JWT["AUTH_COOKIE_SECURE"] = False
     REST_AUTH["JWT_AUTH_SECURE"] = False
 else:
@@ -167,17 +164,17 @@ CSRF_TRUSTED_ORIGINS = config(
     cast=Csv(),
 )
 
-CORS_EXPOSE_HEADERS = ['Content-Type', 'X-CSRFToken']
+CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
 CORS_ALLOW_HEADERS = [
-    'accept',
-    'accept-encoding',
-    'authorization',
-    'content-type',
-    'dnt',
-    'origin',
-    'user-agent',
-    'x-csrftoken',
-    'x-requested-with',
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
 ]
 
 MIDDLEWARE = [
@@ -237,26 +234,26 @@ ASGI_APPLICATION = (
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# For Development
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
-}
-
-# For Production
+# # For Development
 # DATABASES = {
 #     "default": {
-#         "ENGINE": config("DB_ENGINE"),
-#         "NAME": config("DB_NAME"),
-#         "USER": config("DB_USER"),
-#         "PASSWORD": config("DB_PASSWORD"),
-#         "HOST": config("DB_HOST"),
-#         "PORT": config("DB_PORT"),
-#         "OPTIONS": {"sslmode": "require"},
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
 #     }
 # }
+
+# For Production
+DATABASES = {
+    "default": {
+        "ENGINE": config("DB_ENGINE"),
+        "NAME": config("DB_NAME"),
+        "USER": config("DB_USER"),
+        "PASSWORD": config("DB_PASSWORD"),
+        "HOST": config("DB_HOST"),
+        "PORT": config("DB_PORT"),
+        "OPTIONS": {"sslmode": "require"},
+    }
+}
 
 
 # Password validation
@@ -354,31 +351,10 @@ MANAGERS = ADMINS
 
 
 #################### [REDIS CONFIGURATIONS DEVELOPMENT] ####################
-redis_config = {
-    "host": config("REDIS_HOST", default="127.0.0.1"),
-    "port": config("REDIS_PORT", default=6379, cast=int),
-}
-
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [redis_config],
-        },
-    },
-}
-#################### [ END ] ####################
-
-
-#################### [REDIS CONFIGURATIONS PRODUCTION] ####################
 # redis_config = {
-#     "host": config("REDIS_HOST"),
-#     "port": config("REDIS_PORT", cast=int),
-#     "password": config("REDIS_PASSWORD"),
+#     "host": config("REDIS_HOST", default="127.0.0.1"),
+#     "port": config("REDIS_PORT", default=6379, cast=int),
 # }
-
-# if config("REDIS_SSL", default=False, cast=bool):
-#     redis_config["ssl"] = True
 
 # CHANNEL_LAYERS = {
 #     "default": {
@@ -388,4 +364,25 @@ CHANNEL_LAYERS = {
 #         },
 #     },
 # }
+#################### [ END ] ####################
+
+
+#################### [REDIS CONFIGURATIONS PRODUCTION] ####################
+redis_config = {
+    "host": config("REDIS_HOST"),
+    "port": config("REDIS_PORT", cast=int),
+    "password": config("REDIS_PASSWORD"),
+}
+
+if config("REDIS_SSL", default=False, cast=bool):
+    redis_config["ssl"] = True
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [redis_config],
+        },
+    },
+}
 #################### [ END ] ####################
