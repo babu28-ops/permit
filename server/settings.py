@@ -234,7 +234,7 @@ ASGI_APPLICATION = (
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# # For Development
+# For Development
 # DATABASES = {
 #     "default": {
 #         "ENGINE": "django.db.backends.sqlite3",
