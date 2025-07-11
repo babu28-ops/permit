@@ -1,20 +1,16 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
-from users.models import CustomUser # Import your CustomUser model directly
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
+from decouple import config
 
 class Command(BaseCommand):
-    help = 'Creates a new user with the "ADMIN" role.'
-
-    def add_arguments(self, parser):
-        parser.add_argument('email', type=str, help='The email for the new admin user.')
-        parser.add_argument('password', type=str, help='The password for the new admin user.')
+    help = 'Creates a new admin user using credentials from .env file'
 
     def handle(self, *args, **options):
         User = get_user_model()
-        email = options['email']
-        password = options['password']
+        email = config("DEFAULT_ADMIN_EMAIL")
+        password = config("DEFAULT_ADMIN_PASSWORD")
 
         # Validate email format
         try:
@@ -24,18 +20,18 @@ class Command(BaseCommand):
 
         # Check if user with this email already exists
         if User.objects.filter(email=email).exists():
-            raise CommandError(f'Error: User with email {email} already exists.')
+            self.stdout.write(self.style.WARNING(f'Admin user with email {email} already exists.'))
+            return
 
         try:
             # Create the user with the ADMIN role
-            # Ensure is_staff and is_superuser are also True for admin role
             user = User.objects.create_user(
                 email=email,
                 password=password,
-                role=CustomUser.Role.ADMIN, # Assign the ADMIN role
-                is_staff=True,             # Admins should generally be staff
-                is_superuser=True,         # Admins should generally be superusers
-                is_active=True,            # Make the admin account active
+                role='ADMIN', 
+                is_staff=True,
+                is_superuser=True,
+                is_active=True,
             )
             self.stdout.write(self.style.SUCCESS(f'Successfully created admin user: {user.email}'))
         except Exception as e:
